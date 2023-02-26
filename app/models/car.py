@@ -11,3 +11,6 @@ class Car(db.Model):
 
     def __repr__(self):
         return f"<Car {self.color} {self.model}>"
+
+    def to_dict(self):
+        return {'id': self.id, 'model': self.model, 'color': self.color}

@@ -28,6 +28,19 @@ def create_owner():
 
     return jsonify({"owner_id": owner.id, "name": owner.name}), 201
 
+@owner_bp.route("/<int:owner_id>", methods=["PUT"])
+def update_owner(owner_id):
+    owner = Owner.query.get_or_404(owner_id)
+    data = request.json
+    new_name = data.get("name")
+
+    if not new_name:
+        return jsonify({"error": "Missing name parameter"}), 400
+
+    owner.name = new_name
+    db.session.commit()
+
+    return jsonify({"owner_id": owner.id, "name": owner.name}), 200
 
 @owner_bp.route("/", methods=["GET"])
 def get_all_owners():
@@ -46,49 +59,16 @@ def get_owner(owner_id):
     return jsonify({"owner_id": owner.id, "name": owner.name, "has_car": owner.has_car}), 200
 
 
+
+
 @owner_bp.route("/<int:owner_id>", methods=["DELETE"])
 def delete_owner(owner_id):
+    """Delete owner and all his cars from db"""
     owner = Owner.query.get_or_404(owner_id)
-
-    if owner.has_car:
-        return jsonify({"error": "Cannot delete an owner with a car"}), 400
-
+    cars = Car.query.filter_by(owner_id=owner.id).all()
+    for car in cars:
+        db.session.delete(car)
     db.session.delete(owner)
     db.session.commit()
+    return jsonify({'message': f'Owner with id {owner_id} has been deleted'}), 204
 
-    return "", 204
-
-
-@owner_bp.route("/<int:owner_id>/add-car", methods=["POST"])
-def add_car_to_owner(owner_id):
-    owner = Owner.query.get_or_404(owner_id)
-
-    if owner.has_car:
-        return jsonify({"error": "Owner already has a car"}), 400
-
-    data = request.json
-    color = data.get("color")
-    model = data.get("model")
-
-    if not color or not model:
-        return jsonify({"error": "Missing color or model parameter"}), 400
-
-    if color not in ["yellow", "blue", "gray"]:
-        return jsonify({"error": "Invalid color parameter"}), 400
-
-    if model not in ["hatch", "sedan", "convertible"]:
-        return jsonify({"error": "Invalid model parameter"}), 400
-
-    car_count = Car.query.filter_by(owner_id=owner_id).count()
-
-    if car_count >= 3:
-        return jsonify({"error": "Owner already has 3 cars"}), 400
-
-    car = Car(color=color, model=model, owner_id=owner_id)
-    db.session.add(car)
-    db.session.commit()
-
-    owner.has_car = True
-    db.session.commit()
-
-    return jsonify({"car_id": car.id, "color": car.color, "model": car.model}), 201

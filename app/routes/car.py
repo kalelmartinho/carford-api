@@ -30,7 +30,13 @@ def add_car():
         return jsonify({'error': f'Owner with id {owner_id} not found'}), 404
     if len(owner.cars) >= 3:
         return jsonify({'error': f'Owner {owner.name} already has the maximum number of cars (3)'}), 400
-    car = Car(color=data.get('color'), model=data.get('model'))
+    model = data.get('model')
+    color = data.get('color')
+    if model not in ['sedan', 'hatch', 'suv']:
+        return jsonify({'error': f'{model} is not a valid car model'}), 400
+    if color not in ['red', 'blue', 'green']:
+        return jsonify({'error': f'{color} is not a valid car color'}), 400
+    car = Car(color=color, model=model)
     owner.cars.append(car)
     db.session.add(car)
     db.session.commit()

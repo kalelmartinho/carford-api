@@ -9,3 +9,6 @@ class Owner(db.Model):
 
     def __repr__(self):
         return f"<Owner {self.name}>"
+
+    def to_dict(self):
+        return {'id': self.id, 'name': self.name, 'has_car': self.has_car}
